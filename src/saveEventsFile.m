@@ -70,13 +70,14 @@ function [logFile] = saveEventsFile(action, cfg, logFile)
 
         case 'init'
 
-            logFile = initializeExtraColumns(logFile);
-
-        case 'open'
-
             logFile(1).filename = cfg.fileName.events;
 
             logFile = initializeFile(cfg, logFile);
+
+        case 'open'
+            
+            logFile = openFile(cfg, logFile);
+
 
         case 'open_stim'
 
@@ -109,6 +110,8 @@ function [logFile] = saveEventsFile(action, cfg, logFile)
     logFile = resetLogFileVar(logFile);
 
 end
+
+
 
 function logFile = checklLogFile(action, logFile, iEvent, cfg)
 
@@ -145,9 +148,34 @@ function logFile = checklLogFile(action, logFile, iEvent, cfg)
 
 end
 
-function logFile = initializeFile(cfg, logFile)
 
+
+function logFile = initializeFile(cfg, logFile)
+% This function creates the bids field structure for json files for the
+% three basic bids event columns, and for all requested extra columns. 
+%
+% Note that subfields (e.g. unit, levels etc. can be changed by the user 
+% before calling openFile.  
+    
+    % initialize holy trinity (onset, trial_type, duration) columns
+    logFile(1).columns = struct( ...
+                         'onset', struct( ...
+                                         'Description', 'time elapsed since experiment start', ...
+                                         'Unit', 's'), ...
+                         'trial_type', struct( ...
+                                              'Description', 'types of trial', ...
+                                              'Levels', ''), ...
+                         'duration', struct( ...
+                                            'Description', 'duration of the event or the block', ...
+                                            'Unit', 's') ...
+                        );   
+                    
+    % initialize extra columns 
     logFile = initializeExtraColumns(logFile);
+    
+end
+
+function logFile = openFile(cfg, logFile)
 
     createDataDictionary(cfg, logFile);
 
