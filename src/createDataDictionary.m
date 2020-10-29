@@ -20,9 +20,7 @@ end
 
 function jsonContent = setJsonContent(fullFilename, logFile)
 
-    
-
-    if ismember('_stim', fullFilename)
+    if logFile.isStim == 1
 
         samplingFrequency = nan;
         startTime = nan;
@@ -39,7 +37,7 @@ function jsonContent = setJsonContent(fullFilename, logFile)
                              'StartTime',  startTime, ...
                              'Columns', []);
 
-    else
+    elseif logFile.isStim == 1
     
         % add holy trininty columns to the json content
         jsonContent = logFile.columns; 
