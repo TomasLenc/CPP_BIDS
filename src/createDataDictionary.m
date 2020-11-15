@@ -10,7 +10,7 @@ function createDataDictionary(cfg, logFile)
     fileName = strrep(logFile(1).filename, '.tsv', '.json');
     fullFilename = getFullFilename(fileName, cfg);
 
-    jsonContent = setJsonContent(fullFilename, logFile);
+    jsonContent = setJsonContent(logFile);
 
     opts.Indent = '    ';
     
@@ -18,14 +18,14 @@ function createDataDictionary(cfg, logFile)
 
 end
 
-function jsonContent = setJsonContent(fullFilename, logFile)
+function jsonContent = setJsonContent(logFile)
 
-    % add default _event file fields to the json content
-    if ~logFile.isStim
+    % regular _events file: add default _event file fields to the json content
+    if ~isfield(logFile,'isStim') || isempty(logFile.isStim) || ~logFile.isStim
         
         jsonContent = logFile.columns; 
 
-    % write json fields if this is a _stim file
+    % _stim file: write stim-specific fields to the json content
     elseif logFile.isStim
         
         samplingFrequency = nan;
@@ -55,7 +55,7 @@ function jsonContent = setJsonContent(fullFilename, logFile)
 
             headerName = returnHeaderName(namesExtraColumns{iExtraColumn}, nbCol, iCol);
 
-            if logFile.isStim
+            if isfield(logFile,'isStim') && ~isempty(logFile.isStim) && logFile.isStim
                 jsonContent.Columns{end + 1} = headerName;
             end
 
