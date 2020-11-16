@@ -27,6 +27,8 @@ function test_saveEventsFileOpenBasic()
     
     logFile = saveEventsFile('init', cfg);
 
+    logFile = saveEventsFile('init', cfg);
+
     % create the events file and header
     logFile = saveEventsFile('open', cfg, logFile);
 
