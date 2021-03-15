@@ -126,6 +126,19 @@ function logFile = saveEventsFile(action, cfg, logFile)
 
             % close txt log file
             fclose(logFile(1).fileID);
+            
+            if logFile(1).isStim
+                
+               fileName = fullfile(cfg.dir.outputSubject, ...
+                                     cfg.fileName.modality, ...
+                                     logFile.filename); 
+               % compress to gz
+               tar(sprintf('%s.gz',fileName),...
+                   fileName);  
+               
+               % delete the original file
+               delete(fileName); 
+            end
 
             message = sprintf('\nData were saved in this file:\n\n%s\n\n', ...
                               fullfile( ...
