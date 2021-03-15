@@ -152,7 +152,10 @@ function logFile = saveEventsFile(action, cfg, logFile)
 
     end
 
-    logFile = resetLogFileVar(logFile);
+    if isfield(logFile,'isStim') && logFile(1).isStim
+    else
+        logFile = resetLogFileVar(logFile);
+    end
 
 end
 
