@@ -319,6 +319,9 @@ end
 
 function logFile = saveToLogFile(logFile, cfg)
 
+    % if this is _events file, we skip events with onset or duration
+    % that are empty, nan or char.
+    if ~logFile(1).isStim
     % appends to the logfile all the data stored in the structure
     % first with the standard BIDS data and then any extra things
     for iEvent = 1:size(logFile, 1)
@@ -330,62 +333,53 @@ function logFile = saveToLogFile(logFile, cfg)
         warningMessageID = [];
         warningMessage = [];
 
-        % if this is _events file, we skip events with onset or duration
-        % that are empty, nan or char.
-        if ~logFile(1).isStim
 
-            onset = logFile(iEvent).onset;
-            duration = logFile(iEvent).duration;
+        onset = logFile(iEvent).onset;
+        duration = logFile(iEvent).duration;
 
-            if any(cell2mat(cellfun(@isnan, {onset duration}, 'UniformOutput', false))) || ...
-               any(cellfun(@ischar, {onset duration})) || ...
-               any(isempty({onset duration}))
+        if any(cell2mat(cellfun(@isnan, {onset duration}, 'UniformOutput', false))) || ...
+           any(cellfun(@ischar, {onset duration})) || ...
+           any(isempty({onset duration}))
 
-                skipEvent = true;
+            skipEvent = true;
 
-                warningMessageID = 'saveEventsFile:emptyEvent';
-                warningMessage = sprintf(['Skipping saving this event. \n '...
-                                          'onset: %s \n duration: %s \n'], ...
-                                         onset, ...
-                                         duration);
-            end
-
-            % if this is _stim file, we skip missing events (i.e. events where
-            % all extra columns have NO values)
-        elseif logFile(1).isStim
-
-            namesExtraColumns = returnNamesExtraColumns(logFile);
-            isValid = ones(1, numel(namesExtraColumns));
-
-            for iExtraColumn = 1:numel(namesExtraColumns)
-                data = logFile(iEvent).(namesExtraColumns{iExtraColumn});
-                if isempty(data) || all(isnan(data)) || (ischar(data) && strcmp(data, 'n/a'))
-                    isValid(iExtraColumn) = 0;
-                end
-            end
-
-            if all(~isValid)
-                skipEvent = true;
-
-                warningMessageID = 'saveEventsFile:emptyEvent';
-                warningMessage = sprintf(['Skipping saving this event. \n', ...
-                                          'No values defined. \n']);
-
-            elseif any(~isValid)
-                skipEvent = false;
-
-                warningMessageID = 'saveEventsFile:missingData';
-                warningMessage = sprintf('Missing some %s data for this event. \n', ...
-                                         namesExtraColumns{find(isValid)});
-            end
+            warningMessageID = 'saveEventsFile:emptyEvent';
+            warningMessage = sprintf(['Skipping saving this event. \n '...
+                                      'onset: %s \n duration: %s \n'], ...
+                                     onset, ...
+                                     duration);
         end
-
+        
         % now save the event to log file (if not skipping)
         throwWarning(cfg, warningMessageID, warningMessage);
-
         printToFile(cfg, logFile, skipEvent, iEvent);
-
+        
     end
+
+    % if this is _stim file, we skip missing events (i.e. events where
+    % all extra columns have NO values)
+    elseif logFile(1).isStim
+
+        colNames = fieldnames(logFile(1).extraColumns); 
+        nCol = length(colNames); 
+        nRow = length(logFile); 
+        
+        data = nan(nRow, nCol); 
+        for iCol=1:nCol
+            data(:,iCol) = [logFile.(colNames{iCol})]; 
+        end
+        
+        % close the open stim file
+        fclose(logFile(1).fileID); 
+        
+        % write everything at once...it's faster! 
+        filename = fullfile(cfg.dir.outputSubject, ...
+                            cfg.fileName.modality, ...
+                            logFile.filename); 
+        dlmwrite(filename, data, '\t'); 
+    end
+
+
 
 end
 
